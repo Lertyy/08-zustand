@@ -1,14 +1,14 @@
+import NotesClient from "./Notes.client";
+import { fetchNotes } from "@/lib/api";
 import { Metadata } from "next";
-import NotesClient from "@/components/NotesClient/NotesClient";
 
 type Props = {
-  params: {
-    slug: string[];
-  };
+  params: Promise<{ slug: string[] }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const tagFromUrl = params.slug?.[0] || "All";
+  const { slug } = await params;
+  const tagFromUrl = slug[0] || "All";
 
   const title = `Notes filtered by: ${tagFromUrl} — NoteHub`;
   const description = `Browse your notes filtered by "${tagFromUrl}" in NoteHub. Quickly find the ideas and tasks you need.`;
@@ -32,8 +32,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function Page({ params }: Props) {
-  const tagFromUrl = params.slug?.[0] === "All" ? "" : params.slug?.[0] || "";
+export default async function Notes({ params }: Props) {
+  const { slug } = await params;
+  const tagFromUrl = slug[0] === "All" ? "" : slug[0];
+  const initialData = await fetchNotes("", 1, tagFromUrl);
 
-  return <NotesClient tag={tagFromUrl} />;
+  return (
+    <NotesClient
+      initialNotes={initialData.notes}
+      initialTotalPages={initialData.totalPages}
+      tag={tagFromUrl}
+    />
+  );
 }
