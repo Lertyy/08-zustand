@@ -12,12 +12,19 @@ import { ErrorMessageEmpty } from "@/components/ErrorMessageEmpty/ErrorMessageEm
 import ToastContainer from "@/components/ToastContainer/ToastContainer";
 import Link from "next/link";
 import css from "./NotesPage.module.css";
+import type { Note } from "@/types/note";
 
 interface NotesClientProps {
+  initialNotes: Note[];
+  initialTotalPages: number;
   tag: string;
 }
 
-export default function NotesClient({ tag }: NotesClientProps) {
+export default function NotesClient({
+  initialNotes,
+  initialTotalPages,
+  tag,
+}: NotesClientProps) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [page, setPage] = useState(1);
@@ -31,14 +38,10 @@ export default function NotesClient({ tag }: NotesClientProps) {
     placeholderData: keepPreviousData,
   });
 
+  const notes = data?.notes ?? initialNotes;
+  const pageCount = data?.totalPages ?? initialTotalPages;
+
   if (isError && error) throw error;
-
-  if (!data) {
-    return <Loader />;
-  }
-
-  const notes = data.notes;
-  const pageCount = data.totalPages;
 
   return (
     <div className={css.app}>
@@ -68,7 +71,7 @@ export default function NotesClient({ tag }: NotesClientProps) {
 
       {isLoading && <Loader />}
 
-      {!isLoading && (
+      {!isLoading && !isError && (
         <>
           {notes.length > 0 ? (
             <NoteList notes={notes} />
