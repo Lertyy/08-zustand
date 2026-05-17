@@ -12,19 +12,12 @@ import { ErrorMessageEmpty } from "@/components/ErrorMessageEmpty/ErrorMessageEm
 import ToastContainer from "@/components/ToastContainer/ToastContainer";
 import Link from "next/link";
 import css from "./NotesPage.module.css";
-import type { Note } from "@/types/note";
 
 interface NotesClientProps {
-  initialNotes: Note[];
-  initialTotalPages: number;
   tag: string;
 }
 
-export default function NotesClient({
-  initialNotes,
-  initialTotalPages,
-  tag,
-}: NotesClientProps) {
+export default function NotesClient({ tag }: NotesClientProps) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [page, setPage] = useState(1);
@@ -38,10 +31,10 @@ export default function NotesClient({
     placeholderData: keepPreviousData,
   });
 
-  const notes = data?.notes ?? initialNotes;
-  const pageCount = data?.totalPages ?? initialTotalPages;
+  if (isError) throw error;
+  if (!data) return <Loader />;
 
-  if (isError && error) throw error;
+  const { notes, totalPages } = data;
 
   return (
     <div className={css.app}>
@@ -56,9 +49,9 @@ export default function NotesClient({
           }}
         />
 
-        {pageCount > 1 && (
+        {totalPages > 1 && (
           <Pagination
-            pageCount={pageCount}
+            pageCount={totalPages}
             currentPage={page}
             onPageChange={setPage}
           />
@@ -71,15 +64,8 @@ export default function NotesClient({
 
       {isLoading && <Loader />}
 
-      {!isLoading && !isError && (
-        <>
-          {notes.length > 0 ? (
-            <NoteList notes={notes} />
-          ) : (
-            <ErrorMessageEmpty />
-          )}
-        </>
-      )}
+      {!isLoading &&
+        (notes.length > 0 ? <NoteList notes={notes} /> : <ErrorMessageEmpty />)}
     </div>
   );
 }
