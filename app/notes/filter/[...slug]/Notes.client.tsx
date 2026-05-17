@@ -12,35 +12,33 @@ import { ErrorMessageEmpty } from "@/components/ErrorMessageEmpty/ErrorMessageEm
 import ToastContainer from "@/components/ToastContainer/ToastContainer";
 import Link from "next/link";
 import css from "./NotesPage.module.css";
-import type { Note } from "@/types/note";
 
 interface NotesClientProps {
-  initialNotes: Note[];
-  initialTotalPages: number;
   tag: string;
 }
 
-export default function NotesClient({
-  initialNotes,
-  initialTotalPages,
-  tag,
-}: NotesClientProps) {
+export default function NotesClient({ tag }: NotesClientProps) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, isError, error } = useQuery<NotesHttpResponse, Error>(
-    {
-      queryKey: ["notes", debouncedSearch, page, tag],
-      queryFn: () => fetchNotes(debouncedSearch, page, tag),
-      placeholderData: keepPreviousData,
-    }
-  );
-
-  const notes = data?.notes ?? initialNotes;
-  const pageCount = data?.totalPages ?? initialTotalPages;
+  const { data, isLoading, isError, error } = useQuery<
+    NotesHttpResponse,
+    Error
+  >({
+    queryKey: ["notes", debouncedSearch, page, tag],
+    queryFn: () => fetchNotes(debouncedSearch, page, tag),
+    placeholderData: keepPreviousData,
+  });
 
   if (isError && error) throw error;
+
+  if (!data) {
+    return <Loader />;
+  }
+
+  const notes = data.notes;
+  const pageCount = data.totalPages;
 
   return (
     <div className={css.app}>
@@ -70,7 +68,7 @@ export default function NotesClient({
 
       {isLoading && <Loader />}
 
-      {!isLoading && !isError && (
+      {!isLoading && (
         <>
           {notes.length > 0 ? (
             <NoteList notes={notes} />
